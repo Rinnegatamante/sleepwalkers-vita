@@ -1,0 +1,44 @@
+// profile sce_fp_psp2
+
+#define _ANDROID
+#define NO_TEXTURE
+
+uniform sampler2D Texture0;
+
+#if defined(PROGRESS_MODE) || defined(HEALTHBAR_MODE)
+	#elif defined(HEALTHBAR_MODE2)
+	#endif
+
+void main(
+	float4 colorVarying : COLOR,
+	float2 uv0Varying : TEXCOORD0,
+	float progressVarying : TEXCOORD2,
+	float4 progressAndAltColor : TEXCOORD1,
+	float4 out gl_FragColor : COLOR
+) {
+	float4 color=colorVarying;
+	float4 txt=tex2D(Texture0,uv0Varying);
+
+#ifdef NO_TEXTURE
+
+#elif defined(HEALTHBAR_MODE)
+	float alpha=txt.w+txt.r;
+	float ss=min((progressVarying+0.05)*20.0,1.0);
+	txt=float4(txt.rrr*ss,alpha);
+	color*=txt;
+#elif defined(HEALTHBAR_MODE2)
+	color.xyz=lerp(progressAndAltColor.xyz,color.xyz,step(0.0,progressAndAltColor.w));
+	color*=txt;
+#else
+	#ifdef PROGRESS_MODE
+		color*=lerp(float4(0.0,0.0,0.0,0.5),float4(1.0,1.0,1.0,1.0),step(0.0,progressVarying));
+	#endif
+	#ifdef ALPHA_ONLY_TEXTURE
+		color.w*=txt.w;
+	#else
+		color*=txt;
+	#endif
+#endif
+	gl_FragColor=color;
+}
+

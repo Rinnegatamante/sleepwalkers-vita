@@ -1,0 +1,34 @@
+// profile sce_fp_psp2
+
+#define _ANDROID
+#define DIFFUSE_TEXTURE
+
+
+uniform sampler2D Texture4;
+// Cloud texture
+uniform float4 CloudColor;
+#ifdef DIFFUSE_TEXTURE
+    uniform sampler2D Texture0;
+#endif
+#ifdef DESATURATION
+	uniform float4 MiscMeshParams[2];
+#endif
+
+uniform float4 UserPSHParams[1];
+
+void main(
+	float3 colorVarying : COLOR,
+	float2 uv0Varying : TEXCOORD0,
+	float4 out gl_FragColor : COLOR
+) {
+	float3 color=colorVarying;
+
+#ifdef DIFFUSE_TEXTURE
+	float4 txt=tex2D(Texture0,uv0Varying);
+#else
+	float4 txt=float4(1,1,1,1);
+#endif
+
+	color=txt.xyz*UserPSHParams[0].xyz;
+	gl_FragColor.xyz=color;
+}

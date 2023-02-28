@@ -1,0 +1,50 @@
+// profile sce_vp_psp2
+
+#define _ANDROID
+#define EXTRAUV
+
+#ifdef SKINNING
+
+uniform float4 BoneMatrices[3*64];
+
+#endif
+
+
+
+uniform float4x4 ModelViewProjMatrix;
+uniform float4 MappingTransform;
+
+void main(
+	float4 BlendWeight,
+	float4 BlendIndices,
+	float3 Position,
+	float3 Normal,
+	float2 UV0,
+	float2 out uv0Varying : TEXCOORD0,
+	float4 out gl_Position : POSITION
+) {
+	float3 pos=Position;
+#ifdef SKINNING
+    int bix=int(BlendIndices.x);
+    int biy=int(BlendIndices.y);
+    int biz=int(BlendIndices.z);
+    int biw=int(BlendIndices.w);
+    float4 va=BoneMatrices[bix]*BlendWeight.x, vb=BoneMatrices[bix+1]*BlendWeight.x, vc=BoneMatrices[bix+2]*BlendWeight.x;
+    va+=BoneMatrices[biy]*BlendWeight.y;
+vb+=BoneMatrices[biy+1]*BlendWeight.y;
+vc+=BoneMatrices[biy+2]*BlendWeight.y;
+    va+=BoneMatrices[biz]*BlendWeight.z;
+vb+=BoneMatrices[biz+1]*BlendWeight.z;
+vc+=BoneMatrices[biz+2]*BlendWeight.z;
+    va+=BoneMatrices[biw]*BlendWeight.w;
+vb+=BoneMatrices[biw+1]*BlendWeight.w;
+vc+=BoneMatrices[biw+2]*BlendWeight.w;
+
+	float4 pos4In=float4(pos,1.0);
+	pos=float3(dot(pos4In,va),dot(pos4In,vb),dot(pos4In,vc));
+#endif
+	float4 pos4=float4(pos,1);
+	gl_Position=mul(pos4,ModelViewProjMatrix);
+
+	uv0Varying = UV0*MappingTransform.xy+MappingTransform.zw;
+}

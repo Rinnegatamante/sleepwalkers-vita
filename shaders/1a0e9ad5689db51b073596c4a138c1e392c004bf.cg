@@ -1,0 +1,25 @@
+// profile sce_vp_psp2
+
+#define _ANDROID
+
+
+
+uniform float4 UserVSHParams[2];
+
+void main(
+	float2 Position,
+	float2 out uv0Varying : TEXCOORD0,
+	float2 out uv1Varying : TEXCOORD1,
+	float4 out gl_Position : POSITION
+) {
+    gl_Position = float4(Position.xy,0,1);
+	
+	float4 posToUV=UserVSHParams[0];
+	float4 outlineDilateOffset=UserVSHParams[1];
+
+	float2 uv0 = Position.xy * posToUV.xy + posToUV.zw;
+	float4 uv  = float4(uv0,uv0)+outlineDilateOffset;
+
+	uv0Varying=uv.xy;
+	uv1Varying=uv.zw;
+}
