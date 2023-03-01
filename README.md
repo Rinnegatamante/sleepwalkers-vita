@@ -12,7 +12,11 @@ This wrapper has been tested only with v.1.2.
 
 ## Changelog
 
-### v1.0
+### v.1.1
+
+- Added possibility to pause game with Start button.
+
+### v.1.0
 
 - Initial release.
 
