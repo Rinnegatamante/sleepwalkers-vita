@@ -1325,6 +1325,7 @@ int ctrl_thread(SceSize args, void *argp) {
 
 	int lastX[2] = { -1, -1 };
 	int lastY[2] = { -1, -1 };
+	int lastStart = 0;
 
 	while (1) {
 		SceTouchData touch;
@@ -1348,6 +1349,17 @@ int ctrl_thread(SceSize args, void *argp) {
 				lastY[i] = -1;
 			}
 		}
+		
+		SceCtrlData pad;
+		sceCtrlPeekBufferPositive(0, &pad, 1);
+		int currStart = (pad.buttons & SCE_CTRL_START) ? 1 : 0;
+		if (currStart != lastStart) {
+			if (!lastStart)
+				Java_com_android_Game11Bits_GameLib_touchDown(fake_env, NULL, touch.reportNum, 920, 30);
+			else
+				Java_com_android_Game11Bits_GameLib_touchUp(fake_env, NULL, touch.reportNum, 920, 30);
+		}
+		lastStart = currStart;
 
 		sceKernelDelayThread(1000);
 	}
