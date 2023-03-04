@@ -1326,6 +1326,8 @@ int ctrl_thread(SceSize args, void *argp) {
 	int lastX[2] = { -1, -1 };
 	int lastY[2] = { -1, -1 };
 	int lastStart = 0;
+	int lastRT = 0;
+	int lastLT = 0;
 
 	while (1) {
 		SceTouchData touch;
@@ -1353,12 +1355,28 @@ int ctrl_thread(SceSize args, void *argp) {
 		SceCtrlData pad;
 		sceCtrlPeekBufferPositive(0, &pad, 1);
 		int currStart = (pad.buttons & SCE_CTRL_START) ? 1 : 0;
+		int currLT = (pad.buttons & SCE_CTRL_LTRIGGER) ? 1 : 0;
+		int currRT = (pad.buttons & SCE_CTRL_RTRIGGER) ? 1 : 0;
 		if (currStart != lastStart) {
 			if (!lastStart)
 				Java_com_android_Game11Bits_GameLib_touchDown(fake_env, NULL, touch.reportNum, 920, 30);
 			else
 				Java_com_android_Game11Bits_GameLib_touchUp(fake_env, NULL, touch.reportNum, 920, 30);
 		}
+		if (currLT != lastLT) {
+			if (!lastLT)
+				Java_com_android_Game11Bits_GameLib_touchDown(fake_env, NULL, touch.reportNum, 45, 505);
+			else
+				Java_com_android_Game11Bits_GameLib_touchUp(fake_env, NULL, touch.reportNum, 45, 505);
+		}
+		if (currRT != lastRT) {
+			if (!lastRT)
+				Java_com_android_Game11Bits_GameLib_touchDown(fake_env, NULL, touch.reportNum, 908, 505);
+			else
+				Java_com_android_Game11Bits_GameLib_touchUp(fake_env, NULL, touch.reportNum, 908, 505);
+		}
+		lastRT = currRT;
+		lastLT = currLT;
 		lastStart = currStart;
 
 		sceKernelDelayThread(1000);
@@ -1448,8 +1466,41 @@ int main(int argc, char *argv[]) {
 	stat(DATA_PATH "/main.obb", &st);
 	printf("%x %x\n", Java_com_android_Game11Bits_GameLib_initOBBFile, Java_com_android_Game11Bits_GameLib_init);
 	Java_com_android_Game11Bits_GameLib_initOBBFile(fake_env, NULL, DATA_PATH "/main.obb", st.st_size);
+	
+	// Extracting intro video
+	SceIoStat st1;
+	if (sceIoGetstat("ux0:data/sleepwalkers/assets/start.mp4", &st1) < 0) {
+		sceIoMkdir("ux0:data/sleepwalkers/assets", 0777);
+		int (* Java_com_android_Game11Bits_GameLib_getOBBOffset)(void *env, void *obj, int idx) = (void *)so_symbol(&funky_mod, "Java_com_android_Game11Bits_GameLib_getOBBOffset");
+		int (* Java_com_android_Game11Bits_GameLib_getOBBSize)(void *env, void *obj, int idx) = (void *)so_symbol(&funky_mod, "Java_com_android_Game11Bits_GameLib_getOBBSize");
+		FILE *f = fopen(DATA_PATH "/main.obb", "rb");
+		int video_offs = Java_com_android_Game11Bits_GameLib_getOBBOffset(fake_env, NULL, 0);
+		int video_size = Java_com_android_Game11Bits_GameLib_getOBBSize(fake_env, NULL, 0);
+		void *video_buf = malloc(video_size);
+		fseek(f, video_offs, SEEK_SET);
+		fread(video_buf, 1, video_size, f);
+		fclose(f);
+		f = fopen(DATA_PATH "/assets/start.mp4", "wb");
+		fwrite(video_buf, 1, video_size, f);
+		fclose(f);
+		free(video_buf);
+	}
+	
+	// Playing the intro video
+	YYVideoOpen("start.mp4");
+	while (!YYVideoDraw()) {
+		vglSwapBuffers(GL_FALSE);
+		SceCtrlData pad;
+		SceTouchData touch;
+		sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch, 1);
+		sceCtrlPeekBufferPositive(0, &pad, 1);
+		if (pad.buttons || touch.reportNum) {
+			YYVideoStop();
+			break;
+		}
+	}
+	
 	Java_com_android_Game11Bits_GameLib_init(fake_env, (void *)0x41414141, "apk", DATA_PATH, NULL, SCREEN_W, SCREEN_H, 0);
-
 	SceUID ctrl_thid = sceKernelCreateThread("ctrl_thread", (SceKernelThreadEntry)ctrl_thread, 0x10000100, 128 * 1024, 0, 0, NULL);
 	sceKernelStartThread(ctrl_thid, 0, NULL);
 

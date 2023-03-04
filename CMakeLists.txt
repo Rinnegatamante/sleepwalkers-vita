@@ -24,6 +24,7 @@ add_executable(sleepwalkers
   loader/so_util.c
   loader/sha1.c
   loader/ctype_patch.c
+  loader/video_player.c
 )
 
 target_link_libraries(sleepwalkers
