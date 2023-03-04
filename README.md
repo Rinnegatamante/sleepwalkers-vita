@@ -12,6 +12,12 @@ This wrapper has been tested only with v.1.2.
 
 ## Changelog
 
+### v.1.2
+
+- Added playback of the intro video at app start.
+- Made it possible to rewind time by pressing L trigger.
+- Made it possible to fast forward by pressing R trigger.
+
 ### v.1.1
 
 - Added possibility to pause game with Start button.
